@@ -1,0 +1,228 @@
+/* Animations */
+.section {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal {
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Notifications */
+.notification {
+    animation: slideIn 0.5s ease-out;
+    max-width: 400px;
+    z-index: 1000;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Badges */
+.badge-libre {
+    background-color: #10b981;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-occupe {
+    background-color: #ef4444;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-grade {
+    background-color: #818cf8;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+}
+
+.badge-cours {
+    background-color: #a78bfa;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+}
+
+/* Tableau emploi du temps */
+.emploi-tab {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.emploi-tab th {
+    background-color: #4f46e5;
+    color: white;
+    padding: 12px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.emploi-tab td {
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #e5e7eb;
+}
+
+.emploi-tab tr:nth-child(even) {
+    background-color: #f9fafb;
+}
+
+.emploi-tab .cours-cell {
+    min-height: 60px;
+    padding: 8px;
+}
+
+.emploi-tab .cours-cell .cours-nom {
+    font-weight: 600;
+    color: #4f46e5;
+}
+
+.emploi-tab .cours-cell .cours-info {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+/* Loading spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e5e7eb;
+    border-radius: 50%;
+    border-top-color: #4f46e5;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Scrollbar personnalisée */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #4f46e5;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #4338ca;
+}
+
+/* Responsive table */
+@media (max-width: 640px) {
+    .emploi-tab th,
+    .emploi-tab td {
+        padding: 6px;
+        font-size: 0.75rem;
+    }
+}
+
+/* Nav button active */
+.nav-btn.active {
+    background-color: #4338ca;
+}
+
+/* Cards hover */
+.dashboard-card {
+    transition: all 0.3s ease;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Form styles */
+.form-input:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* Button styles */
+.btn-primary {
+    background-color: #4f46e5;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.btn-primary:hover {
+    background-color: #4338ca;
+    transform: scale(1.02);
+}
+
+.btn-danger {
+    background-color: #ef4444;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.btn-danger:hover {
+    background-color: #dc2626;
+    transform: scale(1.02);
+}
+
+/* Table hover */
+tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+/* Loading state */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}

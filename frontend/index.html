@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion d'Emploi du Temps</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Navbar -->
+    <nav class="bg-indigo-600 text-white shadow-lg sticky top-0 z-40">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex flex-wrap justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-calendar-alt text-2xl"></i>
+                    <span class="text-xl font-bold hidden sm:inline">Gestion EDT</span>
+                </div>
+                <div class="flex flex-wrap gap-1 md:gap-2">
+                    <button onclick="showSection('dashboard')" class="nav-btn px-2 py-1 md:px-3 md:py-2 rounded hover:bg-indigo-700 transition text-sm md:text-base">
+                        <i class="fas fa-home"></i> <span class="hidden sm:inline">Accueil</span>
+                    </button>
+                    <button onclick="showSection('professeurs')" class="nav-btn px-2 py-1 md:px-3 md:py-2 rounded hover:bg-indigo-700 transition text-sm md:text-base">
+                        <i class="fas fa-user-tie"></i> <span class="hidden sm:inline">Profs</span>
+                    </button>
+                    <button onclick="showSection('salles')" class="nav-btn px-2 py-1 md:px-3 md:py-2 rounded hover:bg-indigo-700 transition text-sm md:text-base">
+                        <i class="fas fa-door-open"></i> <span class="hidden sm:inline">Salles</span>
+                    </button>
+                    <button onclick="showSection('classes')" class="nav-btn px-2 py-1 md:px-3 md:py-2 rounded hover:bg-indigo-700 transition text-sm md:text-base">
+                        <i class="fas fa-users"></i> <span class="hidden sm:inline">Classes</span>
+                    </button>
+                    <button onclick="showSection('emplois')" class="nav-btn px-2 py-1 md:px-3 md:py-2 rounded hover:bg-indigo-700 transition text-sm md:text-base">
+                        <i class="fas fa-clock"></i> <span class="hidden sm:inline">EDT</span>
+                    </button>
+                    <button onclick="showSection('salles-libres')" class="nav-btn px-2 py-1 md:px-3 md:py-2 rounded hover:bg-indigo-700 transition text-sm md:text-base">
+                        <i class="fas fa-search"></i> <span class="hidden sm:inline">Libres</span>
+                    </button>
+                    <button onclick="showSection('emploi-classe')" class="nav-btn px-2 py-1 md:px-3 md:py-2 rounded hover:bg-indigo-700 transition text-sm md:text-base">
+                        <i class="fas fa-chalkboard"></i> <span class="hidden sm:inline">EDT Classe</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenu principal -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Dashboard -->
+        <div id="dashboard" class="section">
+            <h1 class="text-3xl font-bold text-gray-800 mb-6">Tableau de Bord</h1>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                <div class="dashboard-card bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Professeurs</p>
+                            <p class="text-2xl font-bold text-gray-800" id="total-professeurs">0</p>
+                        </div>
+                        <i class="fas fa-user-tie text-4xl text-indigo-500"></i>
+                    </div>
+                </div>
+                <div class="dashboard-card bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Salles</p>
+                            <p class="text-2xl font-bold text-gray-800" id="total-salles">0</p>
+                        </div>
+                        <i class="fas fa-door-open text-4xl text-green-500"></i>
+                    </div>
+                </div>
+                <div class="dashboard-card bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Classes</p>
+                            <p class="text-2xl font-bold text-gray-800" id="total-classes">0</p>
+                        </div>
+                        <i class="fas fa-users text-4xl text-blue-500"></i>
+                    </div>
+                </div>
+                <div class="dashboard-card bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Cours</p>
+                            <p class="text-2xl font-bold text-gray-800" id="total-cours">0</p>
+                        </div>
+                        <i class="fas fa-clock text-4xl text-purple-500"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions rapides -->
+            <div class="mt-8 bg-white rounded-lg shadow-md p-4 md:p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Actions Rapides</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+                    <button onclick="openAddProfesseur()" class="bg-indigo-500 text-white px-4 py-3 rounded-lg hover:bg-indigo-600 transition flex items-center justify-center space-x-2">
+                        <i class="fas fa-plus"></i>
+                        <span>Ajouter Professeur</span>
+                    </button>
+                    <button onclick="openAddSalle()" class="bg-green-500 text-white px-4 py-3 rounded-lg hover:bg-green-600 transition flex items-center justify-center space-x-2">
+                        <i class="fas fa-plus"></i>
+                        <span>Ajouter Salle</span>
+                    </button>
+                    <button onclick="showSection('emplois'); openAddEmploi()" class="bg-purple-500 text-white px-4 py-3 rounded-lg hover:bg-purple-600 transition flex items-center justify-center space-x-2">
+                        <i class="fas fa-plus"></i>
+                        <span>Programmer Cours</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Professeurs -->
+        <div id="professeurs" class="section hidden">
+            <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Gestion des Professeurs</h1>
+                <button onclick="openAddProfesseur()" class="bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 transition flex items-center space-x-2">
+                    <i class="fas fa-plus"></i>
+                    <span>Nouveau</span>
+                </button>
+            </div>
+            <div class="bg-white rounded-lg shadow-md overflow-x-auto">
+                <table class="w-full min-w-[600px]">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                            <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nom</th>
+                            <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prénoms</th>
+                            <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Grade</th>
+                            <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="professeurs-table-body" class="divide-y divide-gray-200">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Salles -->
+        <div id="salles" class="section hidden">
+            <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Gestion des Salles</h1>
+                <button onclick="openAddSalle()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition flex items-center space-x-2">
+                    <i class="fas fa-plus"></i>
+                    <span>Nouvelle</span>
+                </button>
+            </div>
+            <div class="bg-white rounded-lg shadow-md overflow-x-auto">
+                <table class="w-full min-w-[500px]">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                            <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Désignation</th>
+                            <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Occupation</th>
+                            <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="salles-table-body" class="divide-y divide-gray-200">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Classes -->
+        <div id="classes" class="section hidden">
+            <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Gestion des Classes</h1>
+                <button onclick="openAddClasse()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition flex items-center space-x-2">
+                    <i class="fas fa-plus"></i>
+                    <span>Nouvelle</span>
+                </button>
+            </div>
+            <div class="bg-white rounded-lg shadow-md overflow-x-auto">
+                <table class="w-full min-w-[400px]">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                            <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Niveau</th>
+                            <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="classes-table-body" class="divide-y divide-gray-200">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Emploi du temps -->
+        <div id="emplois" class="section hidden">
+            <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Emploi du Temps</h1>
+                <button onclick="openAddEmploi()" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition flex items-center space-x-2">
+                    <i class="fas fa-plus"></i>
+                    <span>Programmer</span>
+                </button>
+            </div>
+            <div class="bg-white rounded-lg shadow-md overflow-x-auto">
+                <table class="w-full min-w-[800px]">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jour</th>
+                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Heure (début → fin)</th>
+                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Matière</th>
+                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Professeur</th>
+                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Classe</th>
+                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Salle</th>
+                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="emplois-table-body" class="divide-y divide-gray-200">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Salles Libres -->
+        <div id="salles-libres" class="section hidden">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">Recherche de Salles Libres</h1>
+            <div class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                        <input type="date" id="recherche-date" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Heure</label>
+                        <input type="time" id="recherche-heure" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="rechercherSallesLibres()" class="w-full bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 transition">
+                            <i class="fas fa-search mr-2"></i> Rechercher
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="salles-libres-result" class="bg-white rounded-lg shadow-md p-4 md:p-6">
+                <p class="text-gray-500 text-center">Aucune recherche effectuée</p>
+            </div>
+        </div>
+
+        <!-- Emploi du temps Classe -->
+        <div id="emploi-classe" class="section hidden">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">Emploi du Temps d'une Classe</h1>
+            <div class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Classe</label>
+                        <select id="edt-classe-select" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Sélectionner</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Semaine</label>
+                        <input type="week" id="edt-semaine" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="flex flex-wrap items-end gap-2">
+                        <button onclick="afficherEDTClasse()" class="flex-1 bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 transition">
+                            <i class="fas fa-eye mr-2"></i> Afficher
+                        </button>
+                        <button onclick="genererPDF()" class="flex-1 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
+                            <i class="fas fa-file-pdf mr-2"></i> PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="edt-classe-result" class="bg-white rounded-lg shadow-md p-4 md:p-6">
+                <p class="text-gray-500 text-center">Sélectionnez une classe et une semaine</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Modal Professeur -->
+    <div id="professeurModal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold" id="professeurModalTitle">Ajouter un Professeur</h2>
+                <button onclick="closeModal('professeurModal')" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <form id="professeurForm" onsubmit="saveProfesseur(event)">
+                <input type="hidden" id="professeur-id">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ID Professeur</label>
+                    <input type="text" id="professeur-idprof" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nom</label>
+                    <input type="text" id="professeur-nom" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Prénoms</label>
+                    <input type="text" id="professeur-prenoms" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Grade</label>
+                    <select id="professeur-grade" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" required>
+                        <option value="">Sélectionner</option>
+                        <option value="Professeur titulaire">Professeur titulaire</option>
+                        <option value="Maître de Conférences">Maître de Conférences</option>
+                        <option value="Assistant d'Enseignement Supérieur et de Recherche">Assistant d'Enseignement Supérieur et de Recherche</option>
+                        <option value="Docteur HDR">Docteur HDR</option>
+                        <option value="Docteur en Informatique">Docteur en Informatique</option>
+                        <option value="Doctorant en informatique">Doctorant en informatique</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('professeurModal')" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Annuler</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Salle -->
+    <div id="salleModal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold" id="salleModalTitle">Ajouter une Salle</h2>
+                <button onclick="closeModal('salleModal')" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <form id="salleForm" onsubmit="saveSalle(event)">
+                <input type="hidden" id="salle-id">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ID Salle</label>
+                    <input type="number" id="salle-idsalle" min="0" step="1" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Désignation</label>
+                    <input type="text" id="salle-design" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Occupation</label>
+                    <select id="salle-occupation" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" required>
+                        <option value="libre">Libre</option>
+                        <option value="occupée">Occupée</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('salleModal')" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Annuler</button>
+                    <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Classe -->
+    <div id="classeModal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold" id="classeModalTitle">Ajouter une Classe</h2>
+                <button onclick="closeModal('classeModal')" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <form id="classeForm" onsubmit="saveClasse(event)">
+                <input type="hidden" id="classe-id">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ID Classe</label>
+                    <input type="text" id="classe-idclasse" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Niveau</label>
+                    <input type="text" id="classe-niveau" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('classeModal')" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Annuler</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Emploi -->
+    <div id="emploiModal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold" id="emploiModalTitle">Programmer un Cours</h2>
+                <button onclick="closeModal('emploiModal')" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <form id="emploiForm" onsubmit="saveEmploi(event)">
+                <input type="hidden" id="emploi-id">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Salle</label>
+                    <select id="emploi-salle" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required>
+                        <option value="">Sélectionner</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Professeur</label>
+                    <select id="emploi-professeur" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required>
+                        <option value="">Sélectionner</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Classe</label>
+                    <select id="emploi-classe-select" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required>
+                        <option value="">Sélectionner</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Matière / Cours</label>
+                    <input type="text" id="emploi-cours" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Date et Heure de début</label>
+                    <input type="datetime-local" id="emploi-date" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Durée du cours</label>
+                    <select id="emploi-duree" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required>
+                        <option value="">Sélectionner la durée</option>
+                        <option value="1">1 heure</option>
+                        <option value="1.5">1h30</option>
+                        <option value="2">2 heures</option>
+                        <option value="2.5">2h30</option>
+                        <option value="3">3 heures</option>
+                        <option value="3.5">3h30</option>
+                        <option value="4">4 heures</option>
+                    </select>
+                    <p class="text-xs text-gray-400 mt-1">La salle sera marquée occupée pendant cette durée, puis redeviendra libre automatiquement.</p>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('emploiModal')" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Annuler</button>
+                    <button type="submit" class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/notifications.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/professeurs.js"></script>
+    <script src="js/salles.js"></script>
+    <script src="js/classes.js"></script>
+    <script src="js/emplois.js"></script>
+    <script src="js/salles-libres.js"></script>
+    <script src="js/emploi-classe.js"></script>
+</body>
+</html>
