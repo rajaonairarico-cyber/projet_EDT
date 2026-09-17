@@ -1,80 +1,170 @@
-// Configuration API
-const USE_MOCK = false;
-const API_BASE_URL = 'http://localhost:8001';
+// ============================================
+// Configuration de l'API
+// Détection automatique : local vs production (Render)
+// ============================================
+
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:8001'
+    : 'https://projet-edt-api.onrender.com';
+
+console.log('🚀 API configurée :', API_BASE_URL);
+
+// ============================================
+// Fonction générique pour les appels API
+// ============================================
 
 async function apiRequest(endpoint, method = 'GET', data = null) {
-    const url = `${API_BASE_URL}/${endpoint}`;
+    const url = `${API_BASE_URL}${endpoint}`;
     const options = {
-        method,
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
     };
-    if (data) options.body = JSON.stringify(data);
-    const response = await fetch(url, options);
-    return response.json();
+
+    if (data && (method === 'POST' || method === 'PUT')) {
+        options.body = JSON.stringify(data);
+    }
+
+    try {
+        const response = await fetch(url, options);
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || result.message || 'Une erreur est survenue');
+        }
+
+        return result;
+    } catch (error) {
+        console.error('API Error:', error);
+        throw error;
+    }
 }
 
-// ---- PROFESSEURS ----
+// ============================================
+// PROFESSEURS
+// ============================================
+
 async function getProfesseurs() {
-    return apiRequest('professeurs');
+    const result = await apiRequest('/professeurs');
+    return Array.isArray(result) ? result : (result.data || result);
 }
-async function addProfesseur(data) {
-    return apiRequest('professeurs', 'POST', data);
+
+async function createProfesseur(data) {
+    const result = await apiRequest('/professeurs', 'POST', data);
+    return result.data || result;
 }
+
 async function updateProfesseur(id, data) {
-    return apiRequest(`professeurs/${id}`, 'PUT', data);
+    const result = await apiRequest(`/professeurs/${id}`, 'PUT', data);
+    return result.data || result;
 }
+
 async function deleteProfesseur(id) {
-    return apiRequest(`professeurs/${id}`, 'DELETE');
+    const result = await apiRequest(`/professeurs/${id}`, 'DELETE');
+    return result.data || result;
 }
 
-// ---- SALLES ----
+// ============================================
+// SALLES
+// ============================================
+
 async function getSalles() {
-    return apiRequest('salles');
+    const result = await apiRequest('/salles');
+    return Array.isArray(result) ? result : (result.data || result);
 }
-async function addSalle(data) {
-    return apiRequest('salles', 'POST', data);
+
+async function createSalle(data) {
+    const result = await apiRequest('/salles', 'POST', data);
+    return result.data || result;
 }
+
 async function updateSalle(id, data) {
-    return apiRequest(`salles/${id}`, 'PUT', data);
+    const result = await apiRequest(`/salles/${id}`, 'PUT', data);
+    return result.data || result;
 }
+
 async function deleteSalle(id) {
-    return apiRequest(`salles/${id}`, 'DELETE');
+    const result = await apiRequest(`/salles/${id}`, 'DELETE');
+    return result.data || result;
 }
 
-// ---- CLASSES ----
+// ============================================
+// CLASSES
+// ============================================
+
 async function getClasses() {
-    return apiRequest('classes');
+    const result = await apiRequest('/classes');
+    return Array.isArray(result) ? result : (result.data || result);
 }
-async function addClass(data) {
-    return apiRequest('classes', 'POST', data);
+
+async function createClasse(data) {
+    const result = await apiRequest('/classes', 'POST', data);
+    return result.data || result;
 }
+
 async function updateClasse(id, data) {
-    return apiRequest(`classes/${id}`, 'PUT', data);
+    const result = await apiRequest(`/classes/${id}`, 'PUT', data);
+    return result.data || result;
 }
+
 async function deleteClasse(id) {
-    return apiRequest(`classes/${id}`, 'DELETE');
+    const result = await apiRequest(`/classes/${id}`, 'DELETE');
+    return result.data || result;
 }
 
-// ---- EMPLOIS ----
+// ============================================
+// EMPLOIS DU TEMPS
+// ============================================
+
 async function getEmplois() {
-    return apiRequest('emplois');
+    const result = await apiRequest('/emplois');
+    return Array.isArray(result) ? result : (result.data || result);
 }
-async function addEmploi(data) {
-    return apiRequest('emplois', 'POST', data);
+
+async function createEmploi(data) {
+    const result = await apiRequest('/emplois', 'POST', data);
+    return result.data || result;
 }
+
 async function updateEmploi(id, data) {
-    return apiRequest(`emplois/${id}`, 'PUT', data);
+    const result = await apiRequest(`/emplois/${id}`, 'PUT', data);
+    return result.data || result;
 }
+
 async function deleteEmploi(id) {
-    return apiRequest(`emplois/${id}`, 'DELETE');
+    const result = await apiRequest(`/emplois/${id}`, 'DELETE');
+    return result.data || result;
 }
 
-// ---- SALLES LIBRES ----
-async function getSallesLibres(date, heure) {
-    return apiRequest(`salles-libres?date=${date}&heure=${heure}`);
+// ============================================
+// SALLES LIBRES
+// ============================================
+
+async function rechercherSallesLibres(date, heure) {
+    const result = await apiRequest(`/salles-libres?date=${date}&heure=${heure}`);
+    return Array.isArray(result) ? result : (result.data || result);
 }
 
-// ---- EMPLOI CLASSE ----
-async function getEmploiClasse(idclasse) {
-    return apiRequest(`emploi-classe?id=${idclasse}`);
+// ============================================
+// EMPLOI CLASSE
+// ============================================
+
+async function getEmploiClasse(idclasse, semaine) {
+    const url = `/emploi-classe?id=${idclasse}` + (semaine ? `&semaine=${semaine}` : '');
+    const result = await apiRequest(url);
+    return Array.isArray(result) ? result : (result.data || result);
+}
+
+// ============================================
+// PDF (simulation)
+// ============================================
+
+async function generatePDF(data) {
+    if (typeof showNotification === 'function') {
+        showNotification('📄 PDF généré (simulation)', 'success');
+    }
+    console.log('PDF demandé pour:', data);
+    return { success: true };
 }
