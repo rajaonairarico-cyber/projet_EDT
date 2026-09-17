@@ -1,6 +1,5 @@
 # ═══════════════════════════════════════════════════════════
 #  Projet EDT — Blueprint Render
-#  Backend PHP (Docker) + PostgreSQL + Frontend Static
 # ═══════════════════════════════════════════════════════════
 
 databases:
@@ -32,7 +31,5 @@ services:
     name: projet-edt-frontend
     runtime: static
     plan: free
-    region: frankfurt
     rootDir: frontend
-    buildCommand: ""
     staticPublishPath: .
