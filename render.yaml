@@ -30,6 +30,5 @@ services:
   - type: web
     name: projet-edt-frontend
     runtime: static
-    plan: free
     rootDir: frontend
     staticPublishPath: .
