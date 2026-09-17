@@ -1,13 +1,6 @@
 # ═══════════════════════════════════════════════════════════
-#  Projet EDT — Blueprint Render
+#  Projet EDT — Blueprint Render (DB externe Neon)
 # ═══════════════════════════════════════════════════════════
-
-databases:
-  - name: projet-edt-db
-    plan: free
-    region: frankfurt
-    databaseName: gestion_emploi_temps
-    ipAllowList: []
 
 services:
   # ── API PHP (Docker) ──────────────────────────────────────
@@ -22,9 +15,7 @@ services:
       - key: DB_DRIVER
         value: pgsql
       - key: DATABASE_URL
-        fromDatabase:
-          name: projet-edt-db
-          property: connectionString
+        sync: false
 
   # ── Frontend (Static Site) ────────────────────────────────
   - type: web

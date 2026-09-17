@@ -1,7 +1,8 @@
-<?php
+<
+?php
 // ============================================
 // Configuration de la base de données
-// Portable : MySQL (développement local) et PostgreSQL (Render)
+// Portable : MySQL (développement local) et PostgreSQL (Render + Neon)
 // ============================================
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'gestion_emploi_temps');
@@ -12,23 +13,22 @@ function isPgsql() {
     return getenv('DB_DRIVER') === 'pgsql';
 }
 
-// Connexion PostgreSQL à partir de l'URL Render (DATABASE_URL)
+// Connexion PostgreSQL à partir de l'URL Neon (DATABASE_URL)
 function connectPgsql() {
     $url = getenv('DATABASE_URL');
     if (!$url) {
         throw new PDOException('La variable DATABASE_URL est manquante');
     }
+
     $u = parse_url($url);
     $host = $u['host'] ?? 'localhost';
     $port = $u['port'] ?? 5432;
-    $db = ltrim($u['path'] ?? '/db', '/');
+    $db   = ltrim($u['path'] ?? '/db', '/');
     $user = isset($u['user']) ? urldecode($u['user']) : '';
     $pass = isset($u['pass']) ? urldecode($u['pass']) : '';
 
-    $dsn = "pgsql:host=$host;port=$port;dbname=$db;";
-    if (strpos($url, 'sslmode') === false) {
-        $dsn .= "sslmode=require;";
-    }
+    // ✅ TOUJOURS ajouter sslmode=require pour Neon
+    $dsn = "pgsql:host=$host;port=$port;dbname=$db;sslmode=require";
 
     return new PDO($dsn, $user, $pass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -183,7 +183,6 @@ function errorResponse($message, $code = 400) {
 }
 
 // Vérifie que tous les champs requis sont présents et non vides.
-// Retourne un tableau de messages d'erreur (vide = tout est valide).
 function validateRequired($data, $fields) {
     $errors = [];
     foreach ($fields as $f) {
@@ -195,7 +194,6 @@ function validateRequired($data, $fields) {
 }
 
 // Vérifie qu'un identifiant n'est pas un nombre négatif.
-// Les IDs alphanumériques (ex: "P001", "5IG") sont acceptés tels quels.
 function idEstValide($id) {
     if ($id === null || trim((string)$id) === '') return false;
     if (is_numeric($id) && (float)$id < 0) return false;
@@ -203,7 +201,6 @@ function idEstValide($id) {
 }
 
 // Calcule les bornes (lundi -> dimanche) de la semaine ISO demandée.
-// $semaine au format "AAAA-Www" (ex: "2026-W25"). Si absent, retourne une plage très large.
 function getWeekDates($semaine) {
     if (!$semaine || strpos($semaine, '-W') === false) {
         return ['debut' => '1970-01-01', 'fin' => '2999-12-31'];
@@ -218,20 +215,18 @@ function getWeekDates($semaine) {
 }
 
 // Vérifie les conflits de créneau (salle / professeur / classe) en tenant compte de la durée.
-// $excludeId permet d'exclure le cours en cours de modification (cas PUT).
 function checkConflit($idsalle, $idprof, $idclasse, $date, $duree = 1.0, $excludeId = null) {
     $minutes = (int) round(((float)$duree) * 60);
     $excludeSql = $excludeId ? "AND id != ?" : "";
 
     $checks = [
-        ['champ' => 'idsalle', 'valeur' => $idsalle, 'message' => '❌ Cette salle est déjà occupée sur ce créneau'],
-        ['champ' => 'idprof',  'valeur' => $idprof,  'message' => '❌ Ce professeur est déjà occupé sur ce créneau'],
-        ['champ' => 'idclasse','valeur' => $idclasse,'message' => '❌ Cette classe a déjà un cours sur ce créneau'],
+        ['champ' => 'idsalle',  'valeur' => $idsalle,  'message' => '❌ Cette salle est déjà occupée sur ce créneau'],
+        ['champ' => 'idprof',   'valeur' => $idprof,   'message' => '❌ Ce professeur est déjà occupé sur ce créneau'],
+        ['champ' => 'idclasse', 'valeur' => $idclasse, 'message' => '❌ Cette classe a déjà un cours sur ce créneau'],
     ];
 
     foreach ($checks as $c) {
         if (isPgsql()) {
-            // PostgreSQL : date + interval
             $sql = "SELECT id FROM emploi_du_temps
                     WHERE {$c['champ']} = ?
                     AND ? < date + (duree * interval '1 minute')
@@ -239,7 +234,6 @@ function checkConflit($idsalle, $idprof, $idclasse, $date, $duree = 1.0, $exclud
                     $excludeSql";
             $params = [$c['valeur'], $date, $minutes];
         } else {
-            // MySQL : DATE_ADD
             $sql = "SELECT id FROM EMPLOI_DU_TEMPS
                     WHERE {$c['champ']} = ?
                     AND ? < DATE_ADD(date, INTERVAL (duree*60) MINUTE)
@@ -257,7 +251,6 @@ function checkConflit($idsalle, $idprof, $idclasse, $date, $duree = 1.0, $exclud
 }
 
 // Met à jour le statut "occupation" de toutes les salles selon l'heure actuelle.
-// Une salle est "occupée" si l'instant présent tombe dans [date_cours, date_cours + duree[.
 function rafraichirOccupationSalles() {
     $pdo = getPDO();
     $now = date('Y-m-d H:i:s');
@@ -279,4 +272,3 @@ function rafraichirOccupationSalles() {
         $pdo->exec("UPDATE salle SET occupation = 'libre'");
     }
 }
-?>
