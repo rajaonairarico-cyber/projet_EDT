@@ -13,7 +13,7 @@ if (!$idclasse) {
 }
 
 try {
-    $classe = fetchOne("SELECT * FROM CLASSE WHERE idclasse = ?", [$idclasse]);
+    $classe = fetchOne("SELECT idclasse, niveau FROM classe WHERE idclasse = ?", [$idclasse]);
     if (!$classe) {
         errorResponse('Classe non trouvée', 404);
     }
@@ -22,12 +22,12 @@ try {
     $debut = $weekDates['debut'];
     $fin = $weekDates['fin'];
 
-    $sql = "SELECT e.*, s.design as salle_design, p.Nom as prof_nom, p.`Prénoms` as prof_prenoms
-            FROM EMPLOI_DU_TEMPS e
-            LEFT JOIN SALLE s ON e.idsalle = s.idsalle
-            LEFT JOIN PROFESSEUR p ON e.idprof = p.idprof
+    $sql = "SELECT e.*, s.design as salle_design, p.nom as prof_nom, p.prenoms AS \"prof_prenoms\"
+            FROM emploi_du_temps e
+            LEFT JOIN salle s ON e.idsalle = s.idsalle
+            LEFT JOIN professeur p ON e.idprof = p.idprof
             WHERE e.idclasse = ?
-            AND DATE(e.date) BETWEEN ? AND ?
+            AND CAST(e.date AS DATE) BETWEEN ? AND ?
             ORDER BY e.date";
 
     $emplois = fetchAll($sql, [$idclasse, $debut, $fin]);

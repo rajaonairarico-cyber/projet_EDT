@@ -2,11 +2,11 @@
 $method = $_SERVER['REQUEST_METHOD'];
 $id = $_GET['id'] ?? null;
 
-$joinSQL = "SELECT e.*, s.design as salle_design, p.Nom as prof_nom, p.`Prénoms` as prof_prenoms, c.niveau as classe_niveau
-            FROM EMPLOI_DU_TEMPS e
-            LEFT JOIN SALLE s ON e.idsalle = s.idsalle
-            LEFT JOIN PROFESSEUR p ON e.idprof = p.idprof
-            LEFT JOIN CLASSE c ON e.idclasse = c.idclasse";
+$joinSQL = "SELECT e.*, s.design as salle_design, p.nom as prof_nom, p.prenoms AS \"prof_prenoms\", c.niveau as classe_niveau
+            FROM emploi_du_temps e
+            LEFT JOIN salle s ON e.idsalle = s.idsalle
+            LEFT JOIN professeur p ON e.idprof = p.idprof
+            LEFT JOIN classe c ON e.idclasse = c.idclasse";
 
 switch ($method) {
     case 'GET':
@@ -30,12 +30,12 @@ switch ($method) {
         if ($conflit['conflit']) errorResponse($conflit['message'], 409);
 
         try {
-            executeInsert("INSERT INTO EMPLOI_DU_TEMPS (idsalle, idprof, idclasse, cours, date, duree) VALUES (?, ?, ?, ?, ?, ?)",
+            executeInsert("INSERT INTO emploi_du_temps (idsalle, idprof, idclasse, cours, date, duree) VALUES (?, ?, ?, ?, ?, ?)",
                 [$data['idsalle'], $data['idprof'], $data['idclasse'], $data['cours'], $data['date'], $duree]);
 
-            $salle = fetchOne("SELECT design FROM SALLE WHERE idsalle = ?", [$data['idsalle']]);
-            $prof = fetchOne("SELECT Nom, `Prénoms` FROM PROFESSEUR WHERE idprof = ?", [$data['idprof']]);
-            $classe = fetchOne("SELECT niveau FROM CLASSE WHERE idclasse = ?", [$data['idclasse']]);
+            $salle = fetchOne("SELECT design FROM salle WHERE idsalle = ?", [$data['idsalle']]);
+            $prof = fetchOne("SELECT nom, prenoms FROM professeur WHERE idprof = ?", [$data['idprof']]);
+            $classe = fetchOne("SELECT niveau FROM classe WHERE idclasse = ?", [$data['idclasse']]);
 
             $finTimestamp = strtotime($data['date']) + ($duree * 3600);
             $heureFin = date('H:i', $finTimestamp);
@@ -43,7 +43,7 @@ switch ($method) {
             $message = "✅ Cours programmé avec succès ! Salle libre à partir de $heureFin"
                 . " — " . $data['cours']
                 . " | " . ($salle['design'] ?? '')
-                . " | " . trim(($prof['Nom'] ?? '') . ' ' . ($prof['Prénoms'] ?? ''))
+                . " | " . trim(($prof['nom'] ?? '') . ' ' . ($prof['prenoms'] ?? ''))
                 . " | " . ($classe['niveau'] ?? '');
 
             successResponse($data, $message);
@@ -64,7 +64,7 @@ switch ($method) {
         if ($conflit['conflit']) errorResponse($conflit['message'], 409);
 
         try {
-            executeUpdate("UPDATE EMPLOI_DU_TEMPS SET idsalle=?, idprof=?, idclasse=?, cours=?, date=?, duree=? WHERE id=?",
+            executeUpdate("UPDATE emploi_du_temps SET idsalle=?, idprof=?, idclasse=?, cours=?, date=?, duree=? WHERE id=?",
                 [$data['idsalle'], $data['idprof'], $data['idclasse'], $data['cours'], $data['date'], $duree, $id]);
             successResponse(null, '✅ Cours modifié avec succès !');
         } catch (PDOException $e) {
@@ -75,7 +75,7 @@ switch ($method) {
     case 'DELETE':
         if (!$id) errorResponse('ID requis pour la suppression', 400);
         try {
-            $affected = executeDelete("DELETE FROM EMPLOI_DU_TEMPS WHERE id = ?", [$id]);
+            $affected = executeDelete("DELETE FROM emploi_du_temps WHERE id = ?", [$id]);
             if ($affected > 0) successResponse(null, '✅ Cours supprimé avec succès !');
             else errorResponse('❌ Cours non trouvé', 404);
         } catch (PDOException $e) {

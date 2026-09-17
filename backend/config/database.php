@@ -1,28 +1,91 @@
 <?php
 // ============================================
 // Configuration de la base de données
+// Portable : MySQL (développement local) et PostgreSQL (Render)
 // ============================================
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'gestion_emploi_temps');
 define('DB_USER', 'root');
 define('DB_PASS', 'bakay@@2005');
 
+function isPgsql() {
+    return getenv('DB_DRIVER') === 'pgsql';
+}
+
+// Connexion PostgreSQL à partir de l'URL Render (DATABASE_URL)
+function connectPgsql() {
+    $url = getenv('DATABASE_URL');
+    if (!$url) {
+        throw new PDOException('La variable DATABASE_URL est manquante');
+    }
+    $u = parse_url($url);
+    $host = $u['host'] ?? 'localhost';
+    $port = $u['port'] ?? 5432;
+    $db = ltrim($u['path'] ?? '/db', '/');
+    $user = isset($u['user']) ? urldecode($u['user']) : '';
+    $pass = isset($u['pass']) ? urldecode($u['pass']) : '';
+
+    $dsn = "pgsql:host=$host;port=$port;dbname=$db;";
+    if (strpos($url, 'sslmode') === false) {
+        $dsn .= "sslmode=require;";
+    }
+
+    return new PDO($dsn, $user, $pass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false
+    ]);
+}
+
+// Crée les tables PostgreSQL (exécuté au démarrage, idempotent)
+function initSchemaPgsql($pdo) {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS professeur (
+        idprof  TEXT PRIMARY KEY,
+        nom     TEXT NOT NULL,
+        prenoms TEXT NOT NULL DEFAULT '',
+        grade   TEXT
+    )");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS salle (
+        idsalle    INTEGER PRIMARY KEY,
+        design     TEXT NOT NULL,
+        occupation TEXT NOT NULL DEFAULT 'libre'
+    )");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS classe (
+        idclasse TEXT PRIMARY KEY,
+        niveau   TEXT NOT NULL
+    )");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS emploi_du_temps (
+        id       SERIAL PRIMARY KEY,
+        idsalle  INTEGER NOT NULL,
+        idprof   TEXT    NOT NULL,
+        idclasse TEXT    NOT NULL,
+        cours    TEXT    NOT NULL,
+        date     TIMESTAMP NOT NULL,
+        duree    NUMERIC(3,1) NOT NULL DEFAULT 1.0
+    )");
+}
+
 // Connexion PDO unique, réutilisée par toutes les fonctions ci-dessous
 function getPDO() {
     static $pdo = null;
     if ($pdo === null) {
         try {
-            $pdo = new PDO(
-                "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
-                DB_USER,
-                DB_PASS,
-                [
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::ATTR_EMULATE_PREPARES => false
-                ]
-            );
-            ensureDureeColumn($pdo);
+            if (isPgsql()) {
+                $pdo = connectPgsql();
+                initSchemaPgsql($pdo);
+            } else {
+                $pdo = new PDO(
+                    "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
+                    DB_USER,
+                    DB_PASS,
+                    [
+                        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                        PDO::ATTR_EMULATE_PREPARES => false
+                    ]
+                );
+                ensureDureeColumn($pdo);
+            }
         } catch (PDOException $e) {
             die(json_encode([
                 'success' => false,
@@ -36,6 +99,10 @@ function getPDO() {
 
 // Ajoute automatiquement la colonne "duree" si elle n'existe pas encore (migration silencieuse)
 function ensureDureeColumn($pdo) {
+    if (isPgsql()) {
+        // Le schéma PG (initSchemaPgsql) contient déjà la colonne
+        return;
+    }
     try {
         $check = $pdo->query("SHOW COLUMNS FROM EMPLOI_DU_TEMPS LIKE 'duree'");
         if ($check && $check->rowCount() === 0) {
@@ -82,6 +149,13 @@ function executeDelete($sql, $params = []) {
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     return $stmt->rowCount();
+}
+
+// --- Gestion des erreurs de doublon (indépendant du SGBD) ----
+// MySQL : code 1062 (ER_DUP_ENTRY) — PostgreSQL : SQLSTATE 23505
+function isDuplicateEntry($e) {
+    if (isset($e->errorInfo[1]) && $e->errorInfo[1] == 1062) return true;
+    return $e->getCode() === '23505';
 }
 
 // ---- Fonctions utilitaires HTTP / JSON ----
@@ -156,12 +230,23 @@ function checkConflit($idsalle, $idprof, $idclasse, $date, $duree = 1.0, $exclud
     ];
 
     foreach ($checks as $c) {
-        $sql = "SELECT id FROM EMPLOI_DU_TEMPS
-                WHERE {$c['champ']} = ?
-                AND ? < DATE_ADD(date, INTERVAL (duree*60) MINUTE)
-                AND DATE_ADD(?, INTERVAL $minutes MINUTE) > date
-                $excludeSql";
-        $params = [$c['valeur'], $date, $date];
+        if (isPgsql()) {
+            // PostgreSQL : date + interval
+            $sql = "SELECT id FROM emploi_du_temps
+                    WHERE {$c['champ']} = ?
+                    AND ? < date + (duree * interval '1 minute')
+                    AND date + (? * interval '1 minute') > date
+                    $excludeSql";
+            $params = [$c['valeur'], $date, $minutes];
+        } else {
+            // MySQL : DATE_ADD
+            $sql = "SELECT id FROM EMPLOI_DU_TEMPS
+                    WHERE {$c['champ']} = ?
+                    AND ? < DATE_ADD(date, INTERVAL (duree*60) MINUTE)
+                    AND DATE_ADD(?, INTERVAL $minutes MINUTE) > date
+                    $excludeSql";
+            $params = [$c['valeur'], $date, $date];
+        }
         if ($excludeId) $params[] = $excludeId;
         $found = fetchOne($sql, $params);
         if ($found) {
@@ -176,17 +261,22 @@ function checkConflit($idsalle, $idprof, $idclasse, $date, $duree = 1.0, $exclud
 function rafraichirOccupationSalles() {
     $pdo = getPDO();
     $now = date('Y-m-d H:i:s');
-    $stmt = $pdo->prepare("SELECT DISTINCT idsalle FROM EMPLOI_DU_TEMPS
-                            WHERE date <= ? AND DATE_ADD(date, INTERVAL (duree*60) MINUTE) > ?");
+    if (isPgsql()) {
+        $stmt = $pdo->prepare("SELECT DISTINCT idsalle FROM emploi_du_temps
+                                WHERE date <= ? AND date + (duree * interval '1 minute') > ?");
+    } else {
+        $stmt = $pdo->prepare("SELECT DISTINCT idsalle FROM EMPLOI_DU_TEMPS
+                                WHERE date <= ? AND DATE_ADD(date, INTERVAL (duree*60) MINUTE) > ?");
+    }
     $stmt->execute([$now, $now]);
     $occupees = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
     if (!empty($occupees)) {
         $in = implode(',', array_fill(0, count($occupees), '?'));
-        $pdo->prepare("UPDATE SALLE SET occupation = 'occupée' WHERE idsalle IN ($in)")->execute($occupees);
-        $pdo->prepare("UPDATE SALLE SET occupation = 'libre' WHERE idsalle NOT IN ($in)")->execute($occupees);
+        $pdo->prepare("UPDATE salle SET occupation = 'occupée' WHERE idsalle IN ($in)")->execute($occupees);
+        $pdo->prepare("UPDATE salle SET occupation = 'libre' WHERE idsalle NOT IN ($in)")->execute($occupees);
     } else {
-        $pdo->exec("UPDATE SALLE SET occupation = 'libre'");
+        $pdo->exec("UPDATE salle SET occupation = 'libre'");
     }
 }
 ?>

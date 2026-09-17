@@ -5,11 +5,11 @@ $id = $_GET['id'] ?? null;
 switch ($method) {
     case 'GET':
         if ($id) {
-            $salle = fetchOne("SELECT * FROM SALLE WHERE idsalle = ?", [$id]);
+            $salle = fetchOne("SELECT * FROM salle WHERE idsalle = ?", [$id]);
             if ($salle) jsonResponse($salle);
             else errorResponse('Salle non trouvée', 404);
         } else {
-            jsonResponse(fetchAll("SELECT * FROM SALLE ORDER BY idsalle"));
+            jsonResponse(fetchAll("SELECT * FROM salle ORDER BY idsalle"));
         }
         break;
 
@@ -21,11 +21,11 @@ switch ($method) {
 
         try {
             $occupation = $data['occupation'] ?? 'libre';
-            executeInsert("INSERT INTO SALLE (idsalle, design, occupation) VALUES (?, ?, ?)",
+            executeInsert("INSERT INTO salle (idsalle, design, occupation) VALUES (?, ?, ?)",
                 [$data['idsalle'], $data['design'], $occupation]);
             successResponse($data, '✅ Salle ajoutée avec succès !');
         } catch (PDOException $e) {
-            if ($e->errorInfo[1] == 1062) errorResponse('❌ Une salle avec cet ID existe déjà', 409);
+            if (isDuplicateEntry($e)) errorResponse('❌ Une salle avec cet ID existe déjà', 409);
             else errorResponse('❌ Erreur: ' . $e->getMessage(), 500);
         }
         break;
@@ -38,7 +38,7 @@ switch ($method) {
 
         try {
             $occupation = $data['occupation'] ?? 'libre';
-            $affected = executeUpdate("UPDATE SALLE SET design = ?, occupation = ? WHERE idsalle = ?",
+            $affected = executeUpdate("UPDATE salle SET design = ?, occupation = ? WHERE idsalle = ?",
                 [$data['design'], $occupation, $id]);
             successResponse(null, '✅ Salle modifiée avec succès !');
         } catch (PDOException $e) {
@@ -49,7 +49,7 @@ switch ($method) {
     case 'DELETE':
         if (!$id) errorResponse('ID requis pour la suppression', 400);
         try {
-            $affected = executeDelete("DELETE FROM SALLE WHERE idsalle = ?", [$id]);
+            $affected = executeDelete("DELETE FROM salle WHERE idsalle = ?", [$id]);
             if ($affected > 0) successResponse(null, '✅ Salle supprimée avec succès !');
             else errorResponse('❌ Salle non trouvée', 404);
         } catch (PDOException $e) {

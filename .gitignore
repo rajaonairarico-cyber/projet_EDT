@@ -1,0 +1,22 @@
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Sécurité
+.env
+.env.local
+
+# Dépendances
+vendor/
+node_modules/
+
+# Base de données locale
+*.db
+*.sqlite
