@@ -1,5 +1,4 @@
-<
-?php
+<?php
 // ============================================
 // Configuration de la base de données
 // Portable : MySQL (développement local) et PostgreSQL (Render + Neon)

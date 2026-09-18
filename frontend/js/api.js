@@ -142,7 +142,7 @@ async function deleteEmploi(id) {
 // SALLES LIBRES
 // ============================================
 
-async function rechercherSallesLibres(date, heure) {
+async function getSallesLibres(date, heure) {
     const result = await apiRequest(`/salles-libres?date=${date}&heure=${heure}`);
     return Array.isArray(result) ? result : (result.data || result);
 }
