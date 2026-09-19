@@ -103,9 +103,9 @@ function ensureDureeColumn($pdo) {
         return;
     }
     try {
-        $check = $pdo->query("SHOW COLUMNS FROM EMPLOI_DU_TEMPS LIKE 'duree'");
+        $check = $pdo->query("SHOW COLUMNS FROM emploi_du_temps LIKE 'duree'");
         if ($check && $check->rowCount() === 0) {
-            $pdo->exec("ALTER TABLE EMPLOI_DU_TEMPS ADD COLUMN duree DECIMAL(3,1) NOT NULL DEFAULT 1.0 COMMENT 'Durée du cours en heures'");
+            $pdo->exec("ALTER TABLE emploi_du_temps ADD COLUMN duree DECIMAL(3,1) NOT NULL DEFAULT 1.0 COMMENT 'Durée du cours en heures'");
         }
     } catch (PDOException $e) {
         // La table n'existe peut-être pas encore : on laisse les erreurs SQL normales gérer ça ailleurs
@@ -233,7 +233,7 @@ function checkConflit($idsalle, $idprof, $idclasse, $date, $duree = 1.0, $exclud
                     $excludeSql";
             $params = [$c['valeur'], $date, $minutes];
         } else {
-            $sql = "SELECT id FROM EMPLOI_DU_TEMPS
+            $sql = "SELECT id FROM emploi_du_temps
                     WHERE {$c['champ']} = ?
                     AND ? < DATE_ADD(date, INTERVAL (duree*60) MINUTE)
                     AND DATE_ADD(?, INTERVAL $minutes MINUTE) > date
@@ -257,7 +257,7 @@ function rafraichirOccupationSalles() {
         $stmt = $pdo->prepare("SELECT DISTINCT idsalle FROM emploi_du_temps
                                 WHERE date <= ? AND date + (duree * interval '1 minute') > ?");
     } else {
-        $stmt = $pdo->prepare("SELECT DISTINCT idsalle FROM EMPLOI_DU_TEMPS
+        $stmt = $pdo->prepare("SELECT DISTINCT idsalle FROM emploi_du_temps
                                 WHERE date <= ? AND DATE_ADD(date, INTERVAL (duree*60) MINUTE) > ?");
     }
     $stmt->execute([$now, $now]);
