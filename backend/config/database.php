@@ -216,6 +216,7 @@ function getWeekDates($semaine) {
 // Vérifie les conflits de créneau (salle / professeur / classe) en tenant compte de la durée.
 function checkConflit($idsalle, $idprof, $idclasse, $date, $duree = 1.0, $excludeId = null) {
     $minutes = (int) round(((float)$duree) * 60);
+    $fin = date('Y-m-d H:i:s', strtotime($date . ' +' . $minutes . ' minutes'));
     $excludeSql = $excludeId ? "AND id != ?" : "";
 
     $checks = [
@@ -229,9 +230,9 @@ function checkConflit($idsalle, $idprof, $idclasse, $date, $duree = 1.0, $exclud
             $sql = "SELECT id FROM emploi_du_temps
                     WHERE {$c['champ']} = ?
                     AND ? < date + (duree * interval '1 minute')
-                    AND date + (? * interval '1 minute') > date
+                    AND ? > date
                     $excludeSql";
-            $params = [$c['valeur'], $date, $minutes];
+            $params = [$c['valeur'], $date, $fin];
         } else {
             $sql = "SELECT id FROM emploi_du_temps
                     WHERE {$c['champ']} = ?

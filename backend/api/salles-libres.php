@@ -14,6 +14,7 @@ if (!$date || !$heure) {
 
 try {
     $datetime = $date . ' ' . $heure . ':00';
+    $datetimeFin = date('Y-m-d H:i:s', strtotime($datetime . ' +1 minute'));
 
     // Une salle est libre si aucun cours ne couvre cet instant précis (en tenant compte de la durée)
     if (isPgsql()) {
@@ -22,7 +23,7 @@ try {
                     SELECT 1 FROM emploi_du_temps e
                     WHERE e.idsalle = s.idsalle
                     AND ? < e.date + (e.duree * interval '1 minute')
-                    AND (? + interval '1 minute') > e.date
+                    AND ? > e.date
                 )
                 ORDER BY s.idsalle";
     } else {
@@ -36,7 +37,7 @@ try {
                 ORDER BY s.idsalle";
     }
 
-    $salles = fetchAll($sql, [$datetime, $datetime]);
+    $salles = fetchAll($sql, [$datetime, $datetimeFin]);
 
     $count = count($salles);
     $message = $count > 0 ? "✅ $count salle(s) libre(s) trouvée(s)" : "❌ Aucune salle libre à cette date et heure";
