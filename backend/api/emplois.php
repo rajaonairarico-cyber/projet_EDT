@@ -26,6 +26,11 @@ switch ($method) {
 
         $duree = (isset($data['duree']) && is_numeric($data['duree']) && $data['duree'] > 0) ? (float)$data['duree'] : 1.0;
 
+        if (!strtotime($data['date'])) errorResponse('❌ Date invalide', 400);
+        if (date('Y-m-d', strtotime($data['date'])) < date('Y-m-d')) {
+            errorResponse('❌ Impossible de programmer un cours dans le passé', 400);
+        }
+
         $conflit = checkConflit($data['idsalle'], $data['idprof'], $data['idclasse'], $data['date'], $duree);
         if ($conflit['conflit']) errorResponse($conflit['message'], 409);
 
@@ -59,6 +64,11 @@ switch ($method) {
         if (!empty($errors)) errorResponse(implode(', ', $errors), 400);
 
         $duree = (isset($data['duree']) && is_numeric($data['duree']) && $data['duree'] > 0) ? (float)$data['duree'] : 1.0;
+
+        if (!strtotime($data['date'])) errorResponse('❌ Date invalide', 400);
+        if (date('Y-m-d', strtotime($data['date'])) < date('Y-m-d')) {
+            errorResponse('❌ Impossible de programmer un cours dans le passé', 400);
+        }
 
         $conflit = checkConflit($data['idsalle'], $data['idprof'], $data['idclasse'], $data['date'], $duree, $id);
         if ($conflit['conflit']) errorResponse($conflit['message'], 409);

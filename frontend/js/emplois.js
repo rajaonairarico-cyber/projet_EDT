@@ -102,6 +102,16 @@ async function saveEmploi(event) {
         duree    : duree
     };
 
+    // Règle : interdire la programmation d'un cours dans le passé (jour calendaire)
+    const debutCal = new Date(data.date);
+    debutCal.setHours(0, 0, 0, 0);
+    const aujourdhui = new Date();
+    aujourdhui.setHours(0, 0, 0, 0);
+    if (isNaN(debutCal.getTime()) || debutCal < aujourdhui) {
+        showNotification("❌ Impossible de programmer un cours dans le passé", 'error');
+        return;
+    }
+
     try {
         let res, result;
         if (id) {
